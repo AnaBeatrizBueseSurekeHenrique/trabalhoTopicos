@@ -5,7 +5,7 @@ import index_descri
 import rank 
 from scipy.cluster.vq import kmeans
 import matplotlib.pyplot as plt
-
+import pos_processamento
 def mostrar_resultados(query_path, query_bbox, rank_resultados, top_n=5, query_id=1):
     plt.figure(figsize=(20, 10))
     
@@ -67,6 +67,7 @@ for id_query, indice in enumerate(indices_das_queries, start=1):
         q_desc = index_descri.gerar_histograma_bovw(cv2.cvtColor(img_q[y:y+h, x:x+w], cv2.COLOR_BGR2GRAY), codebook)
 
         rank_resultados = rank.buscar(q_desc, q_bbox, index, img_q.shape, peso_iou=0.3)
+        rank_resultados = pos_processamento.remover_duplicatas(rank_resultados)
         mostrar_resultados(query_path, q_bbox, rank_resultados, top_n=4, query_id=id_query)
         
     except Exception as e:
