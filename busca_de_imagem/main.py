@@ -68,6 +68,7 @@ for id_query, indice in enumerate(indices_das_queries, start=1):
 
         rank_resultados = rank.buscar(q_desc, q_bbox, index, img_q.shape, peso_iou=0.3)
         rank_resultados = pos_processamento.remover_duplicatas(rank_resultados)
+        rank_resultados = pos_processamento.aplicar_cluster(img_q, q_bbox, rank_resultados)
         mostrar_resultados(query_path, q_bbox, rank_resultados, top_n=4, query_id=id_query)
         
     except Exception as e:
