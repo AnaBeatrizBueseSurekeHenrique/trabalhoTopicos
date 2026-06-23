@@ -71,6 +71,7 @@ def busca_web(docs, consulta, relevantes):
         "id": list(dict(G.in_degree()).keys()),
         "links_recebidos": list(dict(G.in_degree()).values())
     })
+    
 
     df_links_recebidos = df_links_recebidos.merge(df[["id", "titulo"]], on="id")
     df_links_recebidos = df_links_recebidos[["id", "titulo", "links_recebidos"]]
@@ -78,7 +79,23 @@ def busca_web(docs, consulta, relevantes):
 
     print("\n2) links recebidos")
     print(df_links_recebidos.to_string(index=False))
+    df_links_saida = pd.DataFrame({
+        "id": list(dict(G.out_degree()).keys()),
+        "links_saida": list(dict(G.out_degree()).values())
+    })
+    
 
+    df_links_saida = df_links_saida.merge(df[["id", "titulo"]], on="id")
+    df_links_saida = df_links_saida[["id", "titulo", "links_saida"]]
+    df_links_saida = df_links_saida.sort_values("links_saida", ascending=False).reset_index(drop=True)
+
+    print("\n2) links saida")
+    print(df_links_saida.to_string(index=False))
+    saidas = df_links_saida["links_saida"].sum()
+    media = saidas/len(df_links_saida)
+    # print('---------')
+    print(media)
+    #
     pagerank = nx.pagerank(G, alpha=0.85)
 
     df_pr = pd.DataFrame({
@@ -183,9 +200,21 @@ def busca_web(docs, consulta, relevantes):
 
     print("\n5) ranking final antes do anti-spam")
     print(tabela_antes.round(6).to_string(index=False))
+    df_rank["bonus_texto"] = 0
+    print(df)
+    for i in range(0, len(df_links_saida)):
+        aux1 =  ranking_texto.index[ranking_texto['id'] == df_links_saida.iloc[i]["id"]].tolist()
+        score = ranking_texto.at[aux1[0], "score_texto"]
+        if(df_links_saida.iloc[i]["links_saida"] < media and score > 0.20):
+            aux = df_rank.index[df_rank['id'] == df_links_saida.iloc[i]["id"]].tolist()
+            df_rank.at[aux[0],"bonus_texto"] = 1
+    print(df_rank[["titulo", "bonus_texto"]])
 
-
-    df_rank["spam_suspeito"] = df_rank["id"].eq("P").astype(int)
+            # print(val)
+    
+        # if(df_links_saida.locdf_rank["id"].values[i][])
+    
+    df_rank["spam_suspeito"] = 0
     for i in range(0,len(df_rank)):
         if(df_rank["id"].values[i] == "F" or df_rank["id"].values[i] == "I"):
             df_rank["spam_suspeito"].values[i] = 1
@@ -196,10 +225,8 @@ def busca_web(docs, consulta, relevantes):
     )
     
     # # Bonificação para o top 3 td-idf
-    for i in range(0,3):
-        aux = df_rank.index[df_rank['id'] == ranking_texto.iloc[i]["id"]].tolist()
-        df_rank.at[aux[0], "score_final_seguro"] += df_rank.at[aux[0], "score_final_seguro"] * ((3-i)*0.1)
-       
+    df_rank["score_final_seguro"] = (df_rank['score_final_seguro']*(1+0.3*df_rank["bonus_texto"]))
+   
     ranking_depois = df_rank.sort_values("score_final_seguro", ascending=False).reset_index(drop=True)
     ranking_depois["posicao_depois"] = ranking_depois.index + 1
     ranking_depois["top3_depois"] = ranking_depois["posicao_depois"] <= 3
@@ -324,7 +351,7 @@ docs =[
 {
     "id": "F",
     "titulo": "Aprenda mitologia gratuitamente!!",
-    "texto": "Aprenda sobre mitologia grega!! Aprenda sobre Odisseu!! Aprenda sobre o mito de Zeus e Pandora!! Aprenda 90 reais de desconto!!",
+    "texto": "Aprenda sobre mitologia grega!! Aprenda sobre Odisseu!! Aprenda sobre o mito de Zeus e Pandora!! Aprenda!! Temos desconto!!",
     "links": ["A","B","C","D","E","F", "G", "H", "I", "J"]
 },
 {"id": "G",
@@ -341,8 +368,8 @@ docs =[
 {
     "id": "I",
     "titulo": "Site confiável de mitologia!",
-    "texto": "Aprenda sobre mitologia grega!! Aprenda sobre Odisseu!! Aprenda sobre o mito de Zeus e Pandora!! Aprenda 90 reais de desconto!! Mitologia muito importante!! Mitologia!! Mitologia muito gratuita!!",
-    "links": ["A","B","C","D","E","F", "G", "F", "K"]
+    "texto": "Aprenda sobre mitologia grega!! Aprenda sobre Odisseu!! Aprenda sobre o mito de Zeus e Pandora!! Aprenda!! Temos desconto!! Mitologia muito importante!! Mitologia!! Mitologia muito gratuita!!",
+    "links": ["A","B","C","D","E","F", "G", "K"]
 },
 {
     "id": "J",
